@@ -65,6 +65,7 @@ Commands:
   setup-auto          Setup automated backups, updates, and maintenance
 
   install             Install vmws on local machine (Mac/Linux)
+  upgrade             Upgrade vmws to latest version
 
 Options:
   -h, --help          Show this help message
@@ -877,6 +878,75 @@ cmd_setup_auto() {
     echo ""
 }
 
+cmd_upgrade() {
+    echo -e "${YELLOW}Upgrading vmws to latest version...${NC}"
+    echo ""
+
+    # Find the repo
+    REPO_DIR=""
+    if [ -d "$HOME/vm-workstation-manager/.git" ]; then
+        REPO_DIR="$HOME/vm-workstation-manager"
+    elif [ -d "$(pwd)/vm-workstation-manager/.git" ]; then
+        REPO_DIR="$(pwd)/vm-workstation-manager"
+    elif [ -d "$(pwd)/.git" ]; then
+        REPO_DIR="$(pwd)"
+    else
+        echo -e "${RED}Error: Cannot find vm-workstation-manager git repo${NC}"
+        echo ""
+        echo "Expected locations:"
+        echo "  - $HOME/vm-workstation-manager"
+        echo "  - Current directory"
+        echo ""
+        echo "Clone the repo first:"
+        echo "  cd ~"
+        echo "  git clone https://github.com/benthepsychologist/vm-workstation-manager.git"
+        exit 1
+    fi
+
+    echo "Found repo at: $REPO_DIR"
+    cd "$REPO_DIR"
+
+    # Stash any local changes
+    echo "Checking for local changes..."
+    if ! git diff-index --quiet HEAD --; then
+        echo "Stashing local changes..."
+        git stash
+        STASHED=true
+    else
+        STASHED=false
+    fi
+
+    # Pull latest
+    echo "Pulling latest version..."
+    git pull origin master
+
+    # Reinstall
+    echo "Reinstalling..."
+
+    # Determine install location
+    if [ -w "/usr/local/bin" ]; then
+        INSTALL_DIR="/usr/local/bin"
+    else
+        INSTALL_DIR="$HOME/.local/bin"
+        mkdir -p "$INSTALL_DIR"
+    fi
+
+    cp "$REPO_DIR/bin/vmws" "$INSTALL_DIR/vmws"
+    chmod +x "$INSTALL_DIR/vmws"
+
+    # Restore stashed changes if any
+    if [ "$STASHED" = true ]; then
+        echo "Restoring local changes..."
+        git stash pop
+    fi
+
+    echo ""
+    echo -e "${GREEN}✅ Upgraded to latest version!${NC}"
+    echo "Installed at: $INSTALL_DIR/vmws"
+    echo ""
+    echo "Run 'vmws --version' to verify"
+}
+
 cmd_install() {
     echo "Installing vmws locally..."
 
@@ -958,6 +1028,9 @@ main() {
             ;;
         install)
             cmd_install
+            ;;
+        upgrade)
+            cmd_upgrade
             ;;
         -h|--help|help)
             show_help
