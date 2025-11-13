@@ -1,8 +1,14 @@
 # VM Workstation Manager
 
-> Replace Google Cloud Workstations with self-managed VMs and save $91-124/month
+> Replace Google Cloud Workstations with self-managed VMs and save **$91-124/month**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Bash](https://img.shields.io/badge/bash-%23121011.svg?style=flat&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
+[![Google Cloud](https://img.shields.io/badge/Google%20Cloud-%234285F4.svg?style=flat&logo=google-cloud&logoColor=white)](https://cloud.google.com)
 
 A simple CLI tool to manage self-hosted development VMs as drop-in replacements for Google Cloud Workstations.
+
+**💰 Save 61-83% on cloud development costs**
 
 ## Features
 
