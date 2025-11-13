@@ -62,6 +62,7 @@ Commands:
   backup              Create incremental snapshot of VM data disk
   restore             Restore VM from a snapshot
   snapshots           List all snapshots for this VM
+  setup-auto          Setup automated backups, updates, and maintenance
 
   install             Install vmws on local machine (Mac/Linux)
 
@@ -830,6 +831,52 @@ cmd_restore() {
     echo "  vmws tunnel   # Connect to code-server"
 }
 
+cmd_setup_auto() {
+    echo -e "${YELLOW}Setting up automated maintenance on VM...${NC}"
+    echo ""
+
+    if ! check_vm_exists; then
+        echo -e "${RED}Error: VM does not exist${NC}"
+        exit 1
+    fi
+
+    # Get the script directory
+    if [ -d "$(dirname "${BASH_SOURCE[0]}")/../scripts" ]; then
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    elif [ -d "$HOME/vm-workstation-manager/scripts" ]; then
+        SCRIPT_DIR="$HOME/vm-workstation-manager"
+    elif [ -d "$(pwd)/vm-workstation-manager/scripts" ]; then
+        SCRIPT_DIR="$(pwd)/vm-workstation-manager"
+    else
+        echo -e "${RED}Error: Cannot find vm-workstation-manager scripts directory${NC}"
+        exit 1
+    fi
+
+    echo "Copying setup script to VM..."
+    gcloud compute scp "${SCRIPT_DIR}/scripts/setup-automated-maintenance.sh" \
+        "$VM_NAME:/tmp/setup-automated-maintenance.sh" \
+        --zone="$ZONE" \
+        --project="$PROJECT" \
+        --tunnel-through-iap
+
+    echo ""
+    echo "Running setup on VM..."
+    gcloud compute ssh "$VM_NAME" \
+        --zone="$ZONE" \
+        --project="$PROJECT" \
+        --tunnel-through-iap \
+        --command="bash /tmp/setup-automated-maintenance.sh"
+
+    echo ""
+    echo -e "${GREEN}✅ Automated maintenance configured!${NC}"
+    echo ""
+    echo "Your VM now has:"
+    echo "  - Weekly backups (Sundays 2 AM)"
+    echo "  - Daily security updates"
+    echo "  - Weekly reboot check (if needed)"
+    echo ""
+}
+
 cmd_install() {
     echo "Installing vmws locally..."
 
@@ -905,6 +952,9 @@ main() {
         restore)
             shift
             cmd_restore "$@"
+            ;;
+        setup-auto)
+            cmd_setup_auto
             ;;
         install)
             cmd_install

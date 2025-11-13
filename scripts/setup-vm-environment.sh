@@ -61,7 +61,7 @@ After=network.target
 Type=simple
 User=$USER
 WorkingDirectory=/mnt/home/user
-ExecStart=/usr/bin/code-server --config ~/.config/code-server/config.yaml /mnt/home/user
+ExecStart=/usr/bin/code-server --bind-addr 127.0.0.1:8080 --auth none /mnt/home/user
 Restart=on-failure
 
 [Install]
