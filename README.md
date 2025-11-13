@@ -10,6 +10,24 @@ A simple CLI tool to manage self-hosted development VMs as drop-in replacements 
 
 **💰 Save 61-83% on cloud development costs**
 
+## How It Works
+
+This tool runs **entirely from your local machine** (Mac/Linux). No need to SSH into Cloud Workstations.
+
+**Simple workflow:**
+1. Install `vmws` CLI on your Mac
+2. Configure once: `vmws config`
+3. Create VM: `vmws create` or `vmws init-fresh`
+4. Daily use: `vmws start` → `vmws tunnel` → code in browser
+5. Save money: VM auto-stops after 2hr idle
+
+**Under the hood:**
+- Uses `gcloud` commands to manage VMs remotely
+- Takes disk snapshots via Cloud API (no SSH needed)
+- Creates VMs with IAP authentication (secure, no public IPs)
+- Installs dev tools via startup scripts
+- Monitors idle time and auto-shuts down
+
 ## Features
 
 ✅ **Same functionality as Cloud Workstations**
@@ -33,11 +51,17 @@ vmws stop     # Stop VM
 
 ## Two Ways to Use This
 
-### Option 1: Migrate from Cloud Workstation (copy your existing setup)
-Best if you already have a Cloud Workstation with your projects and configs.
+**Everything runs from your local machine (Mac/Linux) - no need to SSH into workstations!**
 
-### Option 2: Start Fresh (no workstation needed)
-Best if you're starting new or want a clean development VM.
+### Option 1: Migrate from Cloud Workstation
+Copy your entire Cloud Workstation environment (all files, projects, dotfiles, configs) to a self-managed VM.
+
+**Best for:** You already have a Cloud Workstation with your development setup.
+
+### Option 2: Start Fresh
+Create a brand new development VM with Docker, code-server, and neovim pre-installed.
+
+**Best for:** Starting a new project or don't have an existing Cloud Workstation.
 
 ## Quick Start
 
@@ -56,73 +80,106 @@ cp bin/vmws /usr/local/bin/vmws
 chmod +x /usr/local/bin/vmws
 ```
 
-### 2a. Create VM - From Cloud Workstation (migrate)
+### 2a. Create VM - Migrate from Cloud Workstation
 
-If you have a Cloud Workstation with your projects/configs:
+**Run everything from your Mac - no SSH into workstation needed!**
 
 ```bash
-# First, find your workstation disk name
+# Step 1: Find your Cloud Workstation's disk name
 gcloud compute disks list --filter='name~workstations'
+# Look for: workstations-XXXXX (in your workstation's region)
 
-# Configure vmws with your workstation disk
-vmws config --workstation-disk workstations-XXXXX --region us-central1
+# Step 2: Configure vmws with the disk info
+vmws config \
+  --workstation-disk workstations-XXXXX \
+  --region northamerica-northeast1 \
+  --zone northamerica-northeast1-b \
+  --vm-name my-dev-vm
 
-# Create VM from your Mac (no need to SSH into workstation!)
+# Step 3: Create the VM (runs remotely via gcloud)
 vmws create
 ```
 
-This will:
-- Snapshot your workstation disk (copies all your files, projects, dotfiles)
-- Create a new VM with your data
-- Install Docker, code-server, neovim
-- Set up auto-shutdown (2hr idle)
-- Generate detailed report
+**What happens:**
+1. Takes snapshot of your workstation disk (remotely via `gcloud`)
+2. Creates new VM with fresh Debian 12 OS
+3. Attaches your workstation data as `/mnt/home/user/`
+4. Installs Docker, code-server, neovim
+5. Sets up auto-shutdown (2hr idle)
 
 **Time:** ~6 minutes
 
-**What gets copied:** All files from `/home/user/` including:
-- Your projects (code, data, documents)
-- Dotfiles (.bashrc, .gitconfig, .ssh, .config, etc.)
-- All configurations and settings
+**What gets copied:** Everything from your workstation's `/home/user/`:
+- ✅ All projects (code, data, documents)
+- ✅ All dotfiles (.bashrc, .gitconfig, .ssh, .config, .vimrc, etc.)
+- ✅ All application data (npm packages, cache, configs)
+- ✅ Command history, SSH keys, cloud credentials
 
-### 2b. Create VM - From Scratch (standalone)
+**What's installed fresh:**
+- ❌ Operating system (new Debian 12)
+- ❌ System packages (Docker, neovim binaries)
+- ❌ code-server
 
-If you're starting fresh or don't have a workstation:
+### 2b. Create VM - Start Fresh (no workstation needed)
+
+**Perfect for new projects or if you don't have a Cloud Workstation.**
 
 ```bash
-# Configure your VM
-vmws config --vm-name my-dev-vm --zone us-central1-a
+# Configure your VM settings
+vmws config \
+  --vm-name my-dev-vm \
+  --zone us-central1-a
 
 # Create fresh VM
 vmws init-fresh
 ```
 
-This will:
-- Create a fresh VM with empty data disk
-- Install Docker, code-server, neovim
-- Set up auto-shutdown (2hr idle)
-- No existing files (start clean)
+**What happens:**
+1. Creates brand new VM with fresh Debian 12
+2. Creates empty 200GB data disk
+3. Installs Docker, code-server, neovim
+4. Sets up auto-shutdown (2hr idle)
 
 **Time:** ~5 minutes
 
-**You get:** Fresh Debian 12 VM with dev tools, empty `/mnt/home/` for your projects
+**What you get:**
+- ✅ Fresh Debian 12 VM
+- ✅ Docker, code-server, neovim installed
+- ✅ Empty `/mnt/home/` directory for your projects
+- ✅ Default shell configs (.bashrc, .profile)
 
-### 3. Use from your local machine
+**What you DON'T get:**
+- ❌ No existing projects or files
+- ❌ No custom dotfiles or configs
+- ❌ No SSH keys (generate new ones)
+- ❌ Clean slate
+
+### 3. Daily Use (from your local machine)
+
+**All commands run from your Mac/Linux terminal:**
 
 ```bash
-# Start VM
+# Start your VM (takes ~30 seconds)
 vmws start
 
-# Connect to code-server (web VS Code)
+# Open tunnel to code-server (web-based VS Code)
 vmws tunnel
-# Visit http://localhost:8080
+# Then visit: http://localhost:8080 in your browser
 
-# Or SSH directly
+# Or SSH into the VM
 vmws ssh
 
-# Stop VM when done
+# Check if VM is running
+vmws status
+
+# Stop VM when done (save money)
 vmws stop
+
+# View auto-shutdown logs
+vmws logs
 ```
+
+**Key point:** Your VM auto-stops after 2 hours of idle time, so you only pay for compute when actively using it!
 
 ## Commands
 
