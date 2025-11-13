@@ -47,8 +47,7 @@ curl -fsSL https://code-server.dev/install.sh | sh
 mkdir -p ~/.config/code-server
 cat > ~/.config/code-server/config.yaml <<EOF
 bind-addr: 127.0.0.1:8080
-auth: password
-password: workstation-test
+auth: none
 cert: false
 EOF
 
@@ -86,9 +85,8 @@ echo "  - Docker: $(docker --version)"
 echo "  - code-server: $(code-server --version)"
 echo ""
 echo "To access code-server:"
-echo "  1. From your local machine, run:"
-echo "     gcloud compute start-iap-tunnel test-vm-from-workstation 8080 --local-host-port=localhost:8080 --zone=northamerica-northeast1-b"
+echo "  1. From your local machine, run: vmws tunnel"
 echo "  2. Visit: http://localhost:8080"
-echo "  3. Password: workstation-test"
+echo "  3. No password required (secured by IAP tunnel)"
 echo ""
 echo "Note: You may need to log out and back in for Docker group membership to take effect."
