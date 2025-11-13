@@ -1,0 +1,2 @@
+# GitHub Actions workflows would go here
+# Future: Add CI/CD, shellcheck, etc.

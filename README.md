@@ -225,18 +225,24 @@ vmws stop
 ```
 vm-workstation-manager/
 ├── bin/
-│   └── vmws                      # Main CLI tool
+│   └── vmws                        # Main CLI tool
 ├── scripts/
-│   ├── run-vm-test-workflow.sh   # Create VM workflow
-│   ├── create-test-vm.sh          # Create VM only
-│   ├── cleanup-test-vm.sh         # Delete resources
-│   ├── setup-vm-environment.sh    # Install dev environment
-│   ├── vm-auto-shutdown.sh        # Auto-shutdown monitor
-│   ├── install-auto-shutdown.sh   # Install auto-shutdown
-│   └── vm-startup-script.sh       # VM startup script
+│   ├── run-vm-test-workflow.sh     # Create VM workflow
+│   ├── create-test-vm.sh           # Create VM only
+│   ├── cleanup-test-vm.sh          # Delete resources
+│   ├── setup-vm-environment.sh     # Install dev environment
+│   ├── vm-auto-shutdown.sh         # Auto-shutdown monitor
+│   ├── install-auto-shutdown.sh    # Install auto-shutdown
+│   └── vm-startup-script.sh        # VM startup script
 ├── docs/
-│   └── VM-AUTOMATION-GUIDE.md     # Detailed guide
-└── README.md                       # This file
+│   └── VM-AUTOMATION-GUIDE.md      # Detailed guide
+├── examples/
+│   └── custom-config.sh            # Customization examples
+├── README.md                        # This file
+├── QUICKSTART.md                    # Get started fast
+├── CONTRIBUTING.md                  # Development guide
+├── ARCHITECTURE.md                  # Deep technical details
+└── LICENSE                          # MIT License
 ```
 
 ## Requirements
@@ -307,30 +313,65 @@ A: Your data is on a persistent disk. Create snapshots regularly with `gcloud co
 **Q: Can I run multiple VMs?**
 A: Yes. Use `vmws config --vm-name dev-vm-2` to manage different VMs.
 
+## Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Get started in 10 minutes
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Deep dive into how it works
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development guide
+- **[docs/VM-AUTOMATION-GUIDE.md](docs/VM-AUTOMATION-GUIDE.md)** - Detailed usage guide
+- **[examples/custom-config.sh](examples/custom-config.sh)** - Customization examples
+
 ## Contributing
 
-Pull requests welcome! Please:
-- Test changes thoroughly
-- Update documentation
-- Follow existing code style
+Pull requests welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Code structure explanation
+- How to make changes
+- Testing guidelines
+- Development workflow
 
 ## License
 
-MIT License - see LICENSE file
+MIT License - see [LICENSE](LICENSE) file
 
 ## Support
 
-- GitHub Issues: Report bugs or request features
-- Discussions: Ask questions or share tips
+- **Issues:** [Report bugs or request features](https://github.com/benthepsychologist/vm-workstation-manager/issues)
+- **Discussions:** Ask questions or share tips
+- **Pull Requests:** Contributions welcome!
+
+## Why This Exists
+
+Cloud Workstations are great but expensive ($150/month with $144 going to control plane fees). This project gives you 95% of the functionality for 60-80% less cost by using self-managed VMs with automation.
+
+Perfect for:
+- ✅ Solo developers
+- ✅ Small teams (2-5 people)
+- ✅ Cost-conscious projects
+- ✅ Learning GCP infrastructure
 
 ## Credits
 
 Created to help developers save money while maintaining the same workflow as Cloud Workstations.
 
+Built with:
+- Bash scripting
+- Google Cloud Compute Engine
+- Identity-Aware Proxy (IAP)
+- code-server
+- Docker
+- Systemd
+
 ---
+
+## Ready to Save Money?
 
 **Save $91-124/month. Start today.**
 
 ```bash
+git clone https://github.com/benthepsychologist/vm-workstation-manager.git
+cd vm-workstation-manager
+./install.sh
 vmws create
 ```
+
+**Star ⭐ this repo if it helps you!**
