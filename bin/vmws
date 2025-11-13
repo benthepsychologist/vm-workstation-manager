@@ -47,6 +47,7 @@ Usage: vmws <command> [options]
 
 Commands:
   create              Create a new development VM from workstation snapshot
+  init-fresh          Create a new development VM from scratch (no workstation needed)
   start               Start the VM if stopped
   stop                Stop the VM
   connect             Connect to VM via SSH
@@ -65,6 +66,7 @@ Options:
 
 Examples:
   vmws create         # Create new dev VM from workstation
+  vmws init-fresh     # Create new dev VM from scratch (standalone)
   vmws start          # Start stopped VM
   vmws connect        # SSH into VM
   vmws tunnel         # Open tunnel to code-server (port 8080)
@@ -107,10 +109,151 @@ cmd_create() {
     if [ ! -f "/home/user/run-vm-test-workflow.sh" ]; then
         echo -e "${RED}Error: Must run 'vmws create' from Cloud Workstation${NC}"
         echo "This command creates a VM from your workstation's disk snapshot."
+        echo ""
+        echo "To create a VM from scratch without a workstation:"
+        echo "  vmws init-fresh"
         exit 1
     fi
 
     bash /home/user/run-vm-test-workflow.sh
+}
+
+cmd_init_fresh() {
+    echo -e "${YELLOW}Creating fresh development VM (no workstation required)...${NC}"
+    echo ""
+
+    # Check if VM already exists
+    if check_vm_exists; then
+        echo -e "${RED}Error: VM '$VM_NAME' already exists${NC}"
+        echo "To delete it first: vmws delete"
+        exit 1
+    fi
+
+    # Configuration
+    MACHINE_TYPE="${MACHINE_TYPE:-e2-standard-2}"
+    DISK_SIZE="${DISK_SIZE:-200GB}"
+    BOOT_DISK_SIZE="${BOOT_DISK_SIZE:-50GB}"
+
+    echo "Configuration:"
+    echo "  VM Name: $VM_NAME"
+    echo "  Zone: $ZONE"
+    echo "  Machine Type: $MACHINE_TYPE (2 vCPU, 8GB RAM)"
+    echo "  Boot Disk: $BOOT_DISK_SIZE"
+    echo "  Data Disk: $DISK_SIZE"
+    echo ""
+
+    read -p "Continue? (yes/no): " -r
+    if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
+        echo "Cancelled"
+        exit 0
+    fi
+
+    echo ""
+    echo "🖥️  Creating VM instance..."
+
+    # Create data disk first
+    echo "💾 Creating data disk..."
+    gcloud compute disks create "${VM_NAME}-disk" \
+        --size="$DISK_SIZE" \
+        --type=pd-standard \
+        --zone="$ZONE" \
+        --project="$PROJECT"
+
+    echo "✅ Data disk created: ${VM_NAME}-disk"
+    echo ""
+
+    # Get the script directory
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+    # Create VM
+    echo "🖥️  Creating VM..."
+    gcloud compute instances create "$VM_NAME" \
+        --machine-type="$MACHINE_TYPE" \
+        --zone="$ZONE" \
+        --project="$PROJECT" \
+        --image-family=debian-12 \
+        --image-project=debian-cloud \
+        --boot-disk-size="$BOOT_DISK_SIZE" \
+        --boot-disk-type=pd-standard \
+        --disk=name="${VM_NAME}-disk",mode=rw \
+        --scopes=cloud-platform \
+        --metadata=enable-oslogin=TRUE \
+        --metadata-from-file=startup-script="${SCRIPT_DIR}/scripts/vm-startup-script.sh"
+
+    echo "✅ VM created: $VM_NAME"
+    echo ""
+    echo "📡 Waiting for VM to be ready..."
+    sleep 15
+
+    # Wait for SSH
+    echo "Waiting for SSH..."
+    for i in {1..30}; do
+        if gcloud compute ssh "$VM_NAME" --zone="$ZONE" --project="$PROJECT" --tunnel-through-iap --command="echo ready" &>/dev/null; then
+            echo "✅ SSH ready"
+            break
+        fi
+        sleep 2
+    done
+
+    echo ""
+    echo "🔧 Installing development environment..."
+    echo "This will take 3-5 minutes (Docker, code-server, neovim)..."
+    echo ""
+
+    # Copy setup script to VM
+    gcloud compute scp "${SCRIPT_DIR}/scripts/setup-vm-environment.sh" \
+        "$VM_NAME:/tmp/setup-vm-environment.sh" \
+        --zone="$ZONE" \
+        --project="$PROJECT" \
+        --tunnel-through-iap
+
+    # Run setup
+    gcloud compute ssh "$VM_NAME" \
+        --zone="$ZONE" \
+        --project="$PROJECT" \
+        --tunnel-through-iap \
+        --command="bash /tmp/setup-vm-environment.sh"
+
+    echo ""
+    echo "⏰ Installing auto-shutdown (2hr idle timeout)..."
+
+    # Copy auto-shutdown scripts
+    gcloud compute scp "${SCRIPT_DIR}/scripts/vm-auto-shutdown.sh" \
+        "$VM_NAME:/tmp/vm-auto-shutdown.sh" \
+        --zone="$ZONE" \
+        --project="$PROJECT" \
+        --tunnel-through-iap
+
+    gcloud compute scp "${SCRIPT_DIR}/scripts/install-auto-shutdown.sh" \
+        "$VM_NAME:/tmp/install-auto-shutdown.sh" \
+        --zone="$ZONE" \
+        --project="$PROJECT" \
+        --tunnel-through-iap
+
+    # Install auto-shutdown
+    gcloud compute ssh "$VM_NAME" \
+        --zone="$ZONE" \
+        --project="$PROJECT" \
+        --tunnel-through-iap \
+        --command="bash /tmp/install-auto-shutdown.sh"
+
+    echo ""
+    echo -e "${GREEN}✅ VM created successfully!${NC}"
+    echo ""
+    echo "Your development VM is ready:"
+    echo "  Name: $VM_NAME"
+    echo "  Zone: $ZONE"
+    echo "  Machine: $MACHINE_TYPE"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Start tunnel: vmws tunnel"
+    echo "  2. Open browser: http://localhost:8080"
+    echo "  3. Start coding!"
+    echo ""
+    echo "Your files will be at: /mnt/home/<your-user>/"
+    echo ""
+    echo "Auto-shutdown: VM will stop after 2hr idle (saves money)"
+    echo ""
 }
 
 cmd_start() {
@@ -372,6 +515,9 @@ main() {
     case "$1" in
         create)
             cmd_create
+            ;;
+        init-fresh)
+            cmd_init_fresh
             ;;
         start)
             cmd_start

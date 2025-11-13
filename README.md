@@ -31,6 +31,14 @@ vmws tunnel   # Connect to code-server
 vmws stop     # Stop VM
 ```
 
+## Two Ways to Use This
+
+### Option 1: Migrate from Cloud Workstation (copy your existing setup)
+Best if you already have a Cloud Workstation with your projects and configs.
+
+### Option 2: Start Fresh (no workstation needed)
+Best if you're starting new or want a clean development VM.
+
 ## Quick Start
 
 ### 1. Install (on your local machine)
@@ -48,7 +56,9 @@ cp bin/vmws /usr/local/bin/vmws
 chmod +x /usr/local/bin/vmws
 ```
 
-### 2. Create VM (from Cloud Workstation)
+### 2a. Create VM - From Cloud Workstation (migrate)
+
+If you have a Cloud Workstation with your projects/configs:
 
 ```bash
 # SSH into your Cloud Workstation
@@ -59,13 +69,40 @@ cd vm-workstation-manager
 ```
 
 This will:
-- Snapshot your workstation disk
+- Snapshot your workstation disk (copies all your files, projects, dotfiles)
 - Create a new VM with your data
 - Install Docker, code-server, neovim
 - Set up auto-shutdown (2hr idle)
 - Generate detailed report
 
 **Time:** ~6 minutes
+
+**What gets copied:** All files from `/home/user/` including:
+- Your projects (code, data, documents)
+- Dotfiles (.bashrc, .gitconfig, .ssh, .config, etc.)
+- All configurations and settings
+
+### 2b. Create VM - From Scratch (standalone)
+
+If you're starting fresh or don't have a workstation:
+
+```bash
+# Configure your VM
+vmws config --vm-name my-dev-vm --zone us-central1-a
+
+# Create fresh VM
+vmws init-fresh
+```
+
+This will:
+- Create a fresh VM with empty data disk
+- Install Docker, code-server, neovim
+- Set up auto-shutdown (2hr idle)
+- No existing files (start clean)
+
+**Time:** ~5 minutes
+
+**You get:** Fresh Debian 12 VM with dev tools, empty `/mnt/home/` for your projects
 
 ### 3. Use from your local machine
 
@@ -89,6 +126,7 @@ vmws stop
 | Command | Description |
 |---------|-------------|
 | `vmws create` | Create VM from workstation (run from workstation) |
+| `vmws init-fresh` | Create VM from scratch (no workstation needed) |
 | `vmws start` | Start stopped VM |
 | `vmws stop` | Stop VM to save money |
 | `vmws status` | Show VM status |
