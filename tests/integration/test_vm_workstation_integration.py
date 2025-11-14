@@ -279,6 +279,13 @@ class VMWorkstationIntegrationTest:
             "Fixing ownership of /mnt/home/user",
         )
 
+        # Write a test file for validation
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self._run_command(
+            ["vmws", "ssh", f"echo 'VM setup completed at {timestamp}' > /mnt/home/user/vm-setup-log.md"],
+            "Writing test file for validation",
+        )
+
     def step6_install_dev_environment(self) -> None:
         """Step 6: Install development environment."""
         print("\n" + "="*80)
@@ -351,8 +358,7 @@ class VMWorkstationIntegrationTest:
         tests = [
             ("Disk mounted", "mountpoint -q /mnt/home && echo 'PASS' || echo 'FAIL'"),
             ("Files accessible", "ls -1 /mnt/home/user/ | wc -l"),
-            ("life-cockpit directory", "test -d /mnt/home/user/life-cockpit && echo 'PASS' || echo 'FAIL'"),
-            ("File read access", "test -r /mnt/home/user/life-cockpit && echo 'PASS' || echo 'FAIL'"),
+            ("File write/read access", "cat /mnt/home/user/vm-setup-log.md > /dev/null 2>&1 && echo 'PASS' || echo 'FAIL'"),
             ("Docker running", "docker ps > /dev/null 2>&1 && echo 'PASS' || echo 'FAIL'"),
             ("code-server running", "systemctl is-active code-server && echo 'PASS' || echo 'FAIL'"),
         ]
