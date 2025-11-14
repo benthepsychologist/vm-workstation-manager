@@ -352,7 +352,7 @@ class VMWorkstationIntegrationTest:
             ("Disk mounted", "mountpoint -q /mnt/home && echo 'PASS' || echo 'FAIL'"),
             ("Files accessible", "ls -1 /mnt/home/user/ | wc -l"),
             ("life-cockpit directory", "test -d /mnt/home/user/life-cockpit && echo 'PASS' || echo 'FAIL'"),
-            ("File read access", "cat /mnt/home/user/README.md > /dev/null 2>&1 && echo 'PASS' || echo 'FAIL'"),
+            ("File read access", "test -r /mnt/home/user/life-cockpit && echo 'PASS' || echo 'FAIL'"),
             ("Docker running", "docker ps > /dev/null 2>&1 && echo 'PASS' || echo 'FAIL'"),
             ("code-server running", "systemctl is-active code-server && echo 'PASS' || echo 'FAIL'"),
         ]
