@@ -358,8 +358,16 @@ class VMWorkstationIntegrationTest:
         ]
 
         for test_name, test_command in tests:
+            # Use raw gcloud ssh for clean output (vmws ssh prints connection messages)
             result = self._run_command(
-                ["vmws", "ssh", test_command],
+                [
+                    "gcloud", "compute", "ssh",
+                    self.vm_name,
+                    f"--zone={self.zone}",
+                    f"--project={self.project}",
+                    "--tunnel-through-iap",
+                    "--command", test_command,
+                ],
                 f"Testing: {test_name}",
                 check=False,
             )
